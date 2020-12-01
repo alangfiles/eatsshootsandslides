@@ -1,0 +1,115 @@
+<html>
+  <head>
+    <title>Eats chutes and ladders</title>
+    <style>
+      #gameboard {
+        width: 600px;
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+      .reverse {
+        display: flex;
+        flex-direction: row-reverse;
+      }
+      .square {
+        padding: 1em;
+        width: 1em;
+        height: 1em;
+        background-color: lightcyan;
+        border: 1px solid grey;
+        text-align: center;
+      }
+    </style>
+    <script>
+      function runSim() {
+        //returns a list of all squares stepped on.
+        const jumpSquares = {
+          1: 38,
+          4: 14,
+          9: 31,
+          16: 6,
+          21: 42,
+          28: 84,
+          36: 44,
+          47: 26,
+          49: 11,
+          51: 67,
+          56: 53,
+          62: 19,
+          64: 60,
+          71: 91,
+          80: 100,
+          87: 24,
+          93: 73,
+          95: 75,
+          98: 78,
+        };
+        const spinWheel = () => {
+          return Math.ceil(Math.random() * 6);
+        };
+
+        let currentSquare = 0;
+        let squaresVisited = [];
+        while (currentSquare != 100) {
+          let spacesToMove = spinWheel();
+          let newSquare = currentSquare + spacesToMove;
+          if (newSquare > 100) {
+            currentSquare = currentSquare;
+          } else if (jumpSquares[newSquare]) {
+            squaresVisited.push(newSquare);
+            currentSquare = jumpSquares[newSquare];
+          } else {
+            currentSquare = newSquare;
+          }
+          squaresVisited.push(currentSquare);
+        }
+
+        return squaresVisited;
+      }
+
+      function simStats(numberOfRuns) {
+        const counts = {};
+
+        for (let i = 0; i < numberOfRuns; i++) {
+          let results = runSim();
+          for (let j = 0; j < results.length; j++) {
+            let num = results[j];
+            counts[num] = counts[num] ? counts[num] + 1 : 1;
+          }
+        }
+        return counts;
+      }
+
+      function buildBoard() {
+        const gameboard = document.getElementById("gameboard");
+        gameboard.innerHTML = "";
+
+        for (let rows = 0; rows < 10; rows++) {
+          const row = document.createElement("div");
+          row.classList.add("row");
+          if (rows % 2 == 1) {
+            row.classList.add("reverse");
+          }
+          for (let squares = 0; squares < 10; squares++) {
+            const squareNumber = 101 - (rows * 10 + (squares + 1));
+            const square = document.createElement("div");
+            square.classList.add("square");
+            square.id = `square_${squareNumber}`;
+            square.innerHTML = squareNumber;
+            row.appendChild(square);
+          }
+          gameboard.appendChild(row);
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <button onclick="runSim(10000)">Run 1000 Sims</button>
+    <button onclick="buildBoard()">Build Board</button>
+    <div id="gameboard"></div>
+  </body>
+</html>
