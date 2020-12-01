@@ -25,6 +25,7 @@
       }
     </style>
     <script>
+      let counts = {};
       function runSim() {
         //returns a list of all squares stepped on.
         const jumpSquares = {
@@ -72,16 +73,49 @@
       }
 
       function simStats(numberOfRuns) {
-        const counts = {};
-
         for (let i = 0; i < numberOfRuns; i++) {
           let results = runSim();
           for (let j = 0; j < results.length; j++) {
             let num = results[j];
             counts[num] = counts[num] ? counts[num] + 1 : 1;
+            const shade = 255 - Math.floor(counts[num] / 255);
+            document.getElementById(
+              `square_${num}`
+            ).style.backgroundColor = `rgb(${shade},${shade},${shade})`;
+            document
+              .getElementById(`square_${num}`)
+              .setAttribute("title", `${counts[num]}`);
           }
         }
         return counts;
+      }
+
+      function showGame() {
+        buildBoard();
+        const game = runSim();
+        const localCounts = {};
+        let step = 0;
+        console.log("game", game);
+        let interval = setInterval(() => {
+          if (!game[step]) {
+            clearInterval(interval);
+          } else {
+            const currentSquare = game[step];
+            localCounts[currentSquare] = localCounts[currentSquare]
+              ? localCounts[currentSquare] + 1
+              : 1;
+
+            let elem = document.getElementById(`square_${currentSquare}`);
+            elem.style.backgroundColor = "green";
+            elem.style.border = `1px solid green`;
+            setTimeout(() => {
+              const shade = 255 - (35 + localCounts[currentSquare] * 35);
+              elem.style.backgroundColor = `rgb(${shade},${shade},${shade}`;
+              elem.style.border = `1px solid grey`;
+            }, 50);
+            step += 1;
+          }
+        }, 100);
       }
 
       function buildBoard() {
@@ -105,11 +139,16 @@
           gameboard.appendChild(row);
         }
       }
+      const clearStats = () => {
+        counts = {};
+        buildBoard();
+      };
     </script>
   </head>
-  <body>
-    <button onclick="runSim(10000)">Run 1000 Sims</button>
-    <button onclick="buildBoard()">Build Board</button>
+  <body onload="buildBoard()">
+    <button onclick="simStats(10000)">Run 10,000 Games</button>
+    <button onclick="showGame()">Run 1 Game</button>
+    <button onclick="clearStats()">Clear Stats</button>
     <div id="gameboard"></div>
   </body>
 </html>
