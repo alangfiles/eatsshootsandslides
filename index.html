@@ -2,10 +2,19 @@
   <head>
     <title>Eats chutes and ladders</title>
     <style>
+      body {
+        display: flex;
+      }
+
       #gameboard {
         width: 600px;
         display: flex;
         flex-wrap: wrap;
+        background-image: url("./background.jpg");
+        background-size: contain;
+        background-repeat: no-repeat;
+        height: 500px;
+        width: 500px;
       }
       .row {
         display: flex;
@@ -19,13 +28,17 @@
         padding: 1em;
         width: 1em;
         height: 1em;
-        background-color: lightcyan;
         border: 1px solid grey;
         text-align: center;
       }
     </style>
     <script>
+      let gamesRun = 0;
       let counts = {};
+      let gamesSet = [];
+
+      const MOVE_TIME = 100;
+
       function runSim() {
         //returns a list of all squares stepped on.
         const jumpSquares = {
@@ -75,6 +88,7 @@
       function simStats(numberOfRuns) {
         for (let i = 0; i < numberOfRuns; i++) {
           let results = runSim();
+          gamesSet.push(results);
           for (let j = 0; j < results.length; j++) {
             let num = results[j];
             counts[num] = counts[num] ? counts[num] + 1 : 1;
@@ -86,8 +100,9 @@
               .getElementById(`square_${num}`)
               .setAttribute("title", `${counts[num]}`);
           }
+          gamesRun++;
         }
-        return counts;
+        displayStats();
       }
 
       function showGame() {
@@ -99,6 +114,7 @@
         let interval = setInterval(() => {
           if (!game[step]) {
             clearInterval(interval);
+            return localCounts;
           } else {
             const currentSquare = game[step];
             localCounts[currentSquare] = localCounts[currentSquare]
@@ -106,16 +122,43 @@
               : 1;
 
             let elem = document.getElementById(`square_${currentSquare}`);
+
             elem.style.backgroundColor = "green";
+
             elem.style.border = `1px solid green`;
             setTimeout(() => {
               const shade = 255 - (35 + localCounts[currentSquare] * 35);
               elem.style.backgroundColor = `rgb(${shade},${shade},${shade}`;
               elem.style.border = `1px solid grey`;
-            }, 50);
+            }, MOVE_TIME / 2);
             step += 1;
           }
-        }, 100);
+        }, MOVE_TIME);
+      }
+
+      async function displayStep(currentSquare) {
+        const shade = 255 - (35 + counts[currentSquare] * 35);
+        elem.style.backgroundColor = `rgb(${shade},${shade},${shade}`;
+        elem.style.border = `1px solid grey`;
+      }
+
+      function showGame2() {
+        buildBoard();
+        const game = runSim();
+        let step = 0;
+        while (game[step]) {
+          let currentSquare = game[step];
+          let elem = document.getElementById(`square_${currentSquare}`);
+          elem.setAttribute("title", `${counts[currentSquare]}`);
+          elem.style.backgroundColor = "green";
+          elem.style.border = `1px solid green`;
+          setTimeout(() => {
+            const shade = 255 - (35 + counts[currentSquare] * 35);
+            elem.style.backgroundColor = `rgb(${shade},${shade},${shade}`;
+            elem.style.border = `1px solid grey`;
+          }, MOVE_TIME);
+          step++;
+        }
       }
 
       function buildBoard() {
@@ -139,16 +182,86 @@
           gameboard.appendChild(row);
         }
       }
+      function runManyGames() {
+        showGame2();
+        gamesRun++;
+        displayStats();
+      }
+
+      function displayStats() {
+        const elem = document.getElementById("stats");
+        elem.innerHTML = "";
+
+        const stats = Object.keys(counts).map((i) => ({
+          square: i,
+          count: counts[i],
+        }));
+
+        const mostMoves = gamesSet
+          .sort((a, b) => a.length < b.length)
+          .slice(0, 1);
+        const leastMoves = gamesSet
+          .sort((a, b) => a.length > b.length)
+          .slice(0, 1);
+        const avgMoves =
+          gamesSet.reduce((acc, cur) => acc + cur.length, 0) / gamesSet.length;
+
+        const mostVisited = stats.sort((a, b) => a.count < b.count).slice(0, 5);
+        const leastVisited = stats
+          .sort((a, b) => a.count > b.count)
+          .slice(0, 5);
+
+        const title = document.createElement("div");
+        title.innerHTML = `<h1>Games Run: ${gamesRun.toLocaleString()}</h1>
+        <p>Game with most moves: ${mostMoves[0].length}</p>
+        <p>Game with least moves: ${leastMoves[0].length}</p>
+        <p>Average number of moves: ${avgMoves}</p>
+        `;
+        elem.appendChild(title);
+
+        const most = document.createElement("div");
+        most.innerHTML = `<h2>Most visited</h2>
+        ${[0, 1, 2, 3, 4]
+          .map(
+            (i) =>
+              `<p>Square ${mostVisited[i].square}: ${mostVisited[
+                i
+              ].count.toLocaleString()}</p>`
+          )
+          .join("")}`;
+        elem.appendChild(most);
+
+        const least = document.createElement("div");
+        least.innerHTML = `<h2>Least visited</h2>
+        ${[0, 1, 2, 3, 4]
+          .map(
+            (i) =>
+              `<p>Square ${leastVisited[i].square}: ${leastVisited[
+                i
+              ].count.toLocaleString()}</p>`
+          )
+          .join("")}`;
+        elem.appendChild(least);
+      }
+
       const clearStats = () => {
         counts = {};
+        gamesSet = [];
+        gamesRun = 0;
         buildBoard();
       };
     </script>
   </head>
   <body onload="buildBoard()">
-    <button onclick="simStats(10000)">Run 10,000 Games</button>
-    <button onclick="showGame()">Run 1 Game</button>
-    <button onclick="clearStats()">Clear Stats</button>
-    <div id="gameboard"></div>
+    <div>
+      <div>
+        <button onclick="simStats(10000)">Run 10,000 Games</button>
+        <button onclick="showGame()">Run 1 Game</button>
+        <button onclick="runManyGames()">Run Games</button>
+        <button onclick="clearStats()">Clear Stats</button>
+      </div>
+      <div id="gameboard"></div>
+    </div>
+    <div id="stats"></div>
   </body>
 </html>
