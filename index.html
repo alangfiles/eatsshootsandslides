@@ -39,8 +39,9 @@
 
       const MOVE_TIME = 100;
 
+      //runs one game, returns all squares visited
       function runSim() {
-        //returns a list of all squares stepped on.
+        let numJumps = 0;
         const jumpSquares = {
           1: 38,
           4: 14,
@@ -69,22 +70,26 @@
         let currentSquare = 0;
         let squaresVisited = [];
         while (currentSquare != 100) {
+          if (currentSquare != 0) {
+            squaresVisited.push(currentSquare);
+          }
           let spacesToMove = spinWheel();
           let newSquare = currentSquare + spacesToMove;
           if (newSquare > 100) {
             currentSquare = currentSquare;
           } else if (jumpSquares[newSquare]) {
+            numJumps++;
             squaresVisited.push(newSquare);
             currentSquare = jumpSquares[newSquare];
           } else {
             currentSquare = newSquare;
           }
-          squaresVisited.push(currentSquare);
         }
 
         return squaresVisited;
       }
 
+      //runs a bunch of games, and then displays the stats.
       function simStats(numberOfRuns) {
         for (let i = 0; i < numberOfRuns; i++) {
           let results = runSim();
@@ -93,16 +98,22 @@
             let num = results[j];
             counts[num] = counts[num] ? counts[num] + 1 : 1;
             const shade = 255 - Math.floor(counts[num] / 255);
-            document.getElementById(
-              `square_${num}`
-            ).style.backgroundColor = `rgb(${shade},${shade},${shade})`;
-            document
-              .getElementById(`square_${num}`)
-              .setAttribute("title", `${counts[num]}`);
+            colorSquare(num, shade, counts[num]);
           }
           gamesRun++;
         }
         displayStats();
+      }
+
+      function colorSquare(squareNum, shade, numberOfVisits) {
+        const hexShade = shade.toString(16);
+
+        document.getElementById(
+          `square_${squareNum}`
+        ).style.backgroundColor = `#${hexShade}${hexShade}${hexShade}55`;
+        document
+          .getElementById(`square_${squareNum}`)
+          .setAttribute("title", `${numberOfVisits}`);
       }
 
       function showGame() {
@@ -122,24 +133,15 @@
               : 1;
 
             let elem = document.getElementById(`square_${currentSquare}`);
-
             elem.style.backgroundColor = "green";
 
-            elem.style.border = `1px solid green`;
             setTimeout(() => {
               const shade = 255 - (35 + localCounts[currentSquare] * 35);
-              elem.style.backgroundColor = `rgb(${shade},${shade},${shade}`;
-              elem.style.border = `1px solid grey`;
+              colorSquare(currentSquare, shade, localCounts[currentSquare]);
             }, MOVE_TIME / 2);
             step += 1;
           }
         }, MOVE_TIME);
-      }
-
-      async function displayStep(currentSquare) {
-        const shade = 255 - (35 + counts[currentSquare] * 35);
-        elem.style.backgroundColor = `rgb(${shade},${shade},${shade}`;
-        elem.style.border = `1px solid grey`;
       }
 
       function showGame2() {
@@ -151,11 +153,9 @@
           let elem = document.getElementById(`square_${currentSquare}`);
           elem.setAttribute("title", `${counts[currentSquare]}`);
           elem.style.backgroundColor = "green";
-          elem.style.border = `1px solid green`;
           setTimeout(() => {
             const shade = 255 - (35 + counts[currentSquare] * 35);
-            elem.style.backgroundColor = `rgb(${shade},${shade},${shade}`;
-            elem.style.border = `1px solid grey`;
+            colorSquare(currentSquare, shade, counts[currentSquare]);
           }, MOVE_TIME);
           step++;
         }
@@ -176,7 +176,7 @@
             const square = document.createElement("div");
             square.classList.add("square");
             square.id = `square_${squareNumber}`;
-            square.innerHTML = squareNumber;
+            //square.innerHTML = squareNumber;
             row.appendChild(square);
           }
           gameboard.appendChild(row);

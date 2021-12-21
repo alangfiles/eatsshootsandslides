@@ -1,0 +1,293 @@
+<html>
+  <head>
+    <title>Eats chutes and ladders</title>
+    <style>
+      body {
+        display: flex;
+      }
+
+      #gameboard {
+        width: 600px;
+        display: flex;
+        flex-wrap: wrap;
+        background-image: url("./background.jpg");
+        background-size: contain;
+        background-repeat: no-repeat;
+        height: 500px;
+        width: 500px;
+      }
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+      .reverse {
+        display: flex;
+        flex-direction: row-reverse;
+      }
+      .square {
+        padding: 1em;
+        width: 1em;
+        height: 1em;
+        border: 1px solid grey;
+        text-align: center;
+      }
+    </style>
+    <script>
+      let gamesRun = 0;
+      let counts = {};
+      let gamesSet = [];
+      let minTurns = 1000;
+      let minJumps = 1000;
+      let maxTurns = 0;
+      let maxJumps = 0;
+      let maxJumpGame;
+      let minJumpGame;
+      let maxTurnGame;
+      let minTurnGame;
+
+      const gameBoard = {};
+
+      const JUMP_SQUARES = {
+        1: 38,
+        4: 14,
+        9: 31,
+        16: 6,
+        21: 42,
+        28: 84,
+        36: 44,
+        47: 26,
+        49: 11,
+        51: 67,
+        56: 53,
+        62: 19,
+        64: 60,
+        71: 91,
+        80: 100,
+        87: 24,
+        93: 73,
+        95: 75,
+        98: 78,
+      };
+      const spinWheel = () => {
+        return Math.ceil(Math.random() * 6);
+      };
+
+      //runs one game, returns all squares visited
+      function runGame() {
+        let numJumps = 0;
+        let numTurns = 0;
+        let currentSquare = 0;
+        let squaresVisited = [];
+
+        while (currentSquare != 100) {
+          // spin wheel
+          let spacesToMove = spinWheel();
+          numTurns++;
+          let squareToMoveTo = currentSquare + spacesToMove;
+
+          // check ups or downs
+          if (JUMP_SQUARES[squareToMoveTo]) {
+            numJumps++;
+            squaresVisited.push(squareToMoveTo);
+            currentSquare = JUMP_SQUARES[squareToMoveTo];
+            squaresVisited.push(currentSquare);
+          } else if (squareToMoveTo <= 100) {
+            currentSquare = squareToMoveTo;
+            squaresVisited.push(currentSquare);
+          } else if (squareToMoveTo > 100) {
+            currentSquare = currentSquare;
+            squaresVisited.push(currentSquare);
+          }
+        }
+
+        return { squares: squaresVisited, jumps: numJumps, turns: numTurns };
+      }
+
+      // //runs a bunch of games, and then displays the stats.
+      function simStats(numberOfRuns) {
+        for (let i = 0; i < numberOfRuns; i++) {
+          let result = runGame();
+          gamesSet.push(result);
+          gamesRun++;
+          result.squares.map((square) => {
+            gameBoard[square] = gameBoard[square] ? gameBoard[square] + 1 : 1;
+          });
+          if (result.jumps > maxJumps) {
+            maxJumps = result.jumps;
+            maxJumpGame = result.squares;
+          }
+          if (result.jumps < minJumps) {
+            minJumps = result.jumps;
+            minJumpGame = result.squares;
+          }
+          if (result.turns < minTurns) {
+            minTurns = result.turns;
+            minTurnGame = result.squares;
+          }
+          if (result.turns > maxTurns) {
+            maxTurns = result.turns;
+            maxTurnGame = result.squares;
+          }
+        }
+      }
+
+      // function colorSquare(squareNum, shade, numberOfVisits) {
+      //   const hexShade = shade.toString(16);
+
+      //   document.getElementById(
+      //     `square_${squareNum}`
+      //   ).style.backgroundColor = `#${hexShade}${hexShade}${hexShade}55`;
+      //   document
+      //     .getElementById(`square_${squareNum}`)
+      //     .setAttribute("title", `${numberOfVisits}`);
+      // }
+
+      // function showGame() {
+      //   buildBoard();
+      //   const game = runGame();
+      //   const localCounts = {};
+      //   let step = 0;
+      //   console.log("game", game);
+      //   let interval = setInterval(() => {
+      //     if (!game[step]) {
+      //       clearInterval(interval);
+      //       return localCounts;
+      //     } else {
+      //       const currentSquare = game[step];
+      //       localCounts[currentSquare] = localCounts[currentSquare]
+      //         ? localCounts[currentSquare] + 1
+      //         : 1;
+
+      //       let elem = document.getElementById(`square_${currentSquare}`);
+      //       elem.style.backgroundColor = "green";
+
+      //       setTimeout(() => {
+      //         const shade = 255 - (35 + localCounts[currentSquare] * 35);
+      //         colorSquare(currentSquare, shade, localCounts[currentSquare]);
+      //       }, MOVE_TIME / 2);
+      //       step += 1;
+      //     }
+      //   }, MOVE_TIME);
+      // }
+
+      // function showGame2() {
+      //   buildBoard();
+      //   const game = runGame();
+      //   let step = 0;
+      //   while (game[step]) {
+      //     let currentSquare = game[step];
+      //     let elem = document.getElementById(`square_${currentSquare}`);
+      //     elem.setAttribute("title", `${counts[currentSquare]}`);
+      //     elem.style.backgroundColor = "green";
+      //     setTimeout(() => {
+      //       const shade = 255 - (35 + counts[currentSquare] * 35);
+      //       colorSquare(currentSquare, shade, counts[currentSquare]);
+      //     }, MOVE_TIME);
+      //     step++;
+      //   }
+      // }
+
+      // function buildBoard() {
+      //   const gameboard = document.getElementById("gameboard");
+      //   gameboard.innerHTML = "";
+
+      //   for (let rows = 0; rows < 10; rows++) {
+      //     const row = document.createElement("div");
+      //     row.classList.add("row");
+      //     if (rows % 2 == 1) {
+      //       row.classList.add("reverse");
+      //     }
+      //     for (let squares = 0; squares < 10; squares++) {
+      //       const squareNumber = 101 - (rows * 10 + (squares + 1));
+      //       const square = document.createElement("div");
+      //       square.classList.add("square");
+      //       square.id = `square_${squareNumber}`;
+      //       //square.innerHTML = squareNumber;
+      //       row.appendChild(square);
+      //     }
+      //     gameboard.appendChild(row);
+      //   }
+      // }
+      // function runManyGames() {
+      //   showGame2();
+      //   gamesRun++;
+      //   displayStats();
+      // }
+
+      // function displayStats() {
+      //   const elem = document.getElementById("stats");
+      //   elem.innerHTML = "";
+
+      //   const stats = Object.keys(counts).map((i) => ({
+      //     square: i,
+      //     count: counts[i],
+      //   }));
+
+      //   const mostMoves = gamesSet
+      //     .sort((a, b) => a.length < b.length)
+      //     .slice(0, 1);
+      //   const leastMoves = gamesSet
+      //     .sort((a, b) => a.length > b.length)
+      //     .slice(0, 1);
+      //   const avgMoves =
+      //     gamesSet.reduce((acc, cur) => acc + cur.length, 0) / gamesSet.length;
+
+      //   const mostVisited = stats.sort((a, b) => a.count < b.count).slice(0, 5);
+      //   const leastVisited = stats
+      //     .sort((a, b) => a.count > b.count)
+      //     .slice(0, 5);
+
+      //   const title = document.createElement("div");
+      //   title.innerHTML = `<h1>Games Run: ${gamesRun.toLocaleString()}</h1>
+      //   <p>Game with most moves: ${mostMoves[0].length}</p>
+      //   <p>Game with least moves: ${leastMoves[0].length}</p>
+      //   <p>Average number of moves: ${avgMoves}</p>
+      //   `;
+      //   elem.appendChild(title);
+
+      //   const most = document.createElement("div");
+      //   most.innerHTML = `<h2>Most visited</h2>
+      //   ${[0, 1, 2, 3, 4]
+      //     .map(
+      //       (i) =>
+      //         `<p>Square ${mostVisited[i].square}: ${mostVisited[
+      //           i
+      //         ].count.toLocaleString()}</p>`
+      //     )
+      //     .join("")}`;
+      //   elem.appendChild(most);
+
+      //   const least = document.createElement("div");
+      //   least.innerHTML = `<h2>Least visited</h2>
+      //   ${[0, 1, 2, 3, 4]
+      //     .map(
+      //       (i) =>
+      //         `<p>Square ${leastVisited[i].square}: ${leastVisited[
+      //           i
+      //         ].count.toLocaleString()}</p>`
+      //     )
+      //     .join("")}`;
+      //   elem.appendChild(least);
+      // }
+
+      // const clearStats = () => {
+      //   counts = {};
+      //   gamesSet = [];
+      //   gamesRun = 0;
+      //   buildBoard();
+      // };
+    </script>
+  </head>
+  <body onload="buildBoard()">
+    <div>
+      <div>
+        <button onclick="simStats(10000)">Run 10,000 Games</button>
+        <button onclick="showGame()">Run 1 Game</button>
+        <button onclick="runManyGames()">Run Games</button>
+        <button onclick="clearStats()">Clear Stats</button>
+      </div>
+      <div id="gameboard"></div>
+    </div>
+    <div id="stats"></div>
+  </body>
+</html>
